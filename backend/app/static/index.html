@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Women Safety Alert System</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Leaflet CSS for OpenStreetMap -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top shadow-sm py-2">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand d-flex align-items-center" href="#" onclick="switchView('view-landing')">
+        <i class="fas fa-shield-heart fa-2x me-2 text-danger"></i>
+        <span>NirbhayaSafe</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-map">Live GPS Map</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-routes">Safe Routes</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-hotspots">Crime Hotspots</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-ai">AI Risk Model</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-network">Trusted Network</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-chatbot">AI Chatbot</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#" data-target-view="view-history">Emergency History</a></li>
+          <li class="nav-item d-none" id="tab-admin-nav"><a class="nav-link fw-semibold text-danger" href="#" data-target-view="view-admin"><i class="fas fa-user-shield me-1"></i> Admin</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-2">
+          <!-- Status indicators -->
+          <span class="badge bg-light text-dark border px-2 py-2">
+            <i class="fas fa-battery-three-quarters text-success me-1"></i> <span id="status-battery-level">88%</span>
+          </span>
+          <span class="badge bg-light text-dark border px-2 py-2">
+            <i class="fas fa-wifi text-primary me-1"></i> <span id="status-network">Online</span>
+          </span>
+
+          <!-- Logged Out View -->
+          <div class="auth-logged-out d-flex gap-2">
+            <button class="btn btn-outline-danger btn-sm" onclick="switchView('view-login')">Login</button>
+            <button class="btn btn-danger btn-sm" onclick="switchView('view-register')">Register</button>
+          </div>
+
+          <!-- Logged In View -->
+          <div class="auth-logged-in d-none d-flex align-items-center gap-2">
+            <span class="fw-semibold text-dark small" id="navbar-username">User</span>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Banner for Active Emergency Alerts -->
+  <div id="active-sos-banner" class="alert alert-danger mb-0 rounded-0 d-none text-center py-2 fw-bold animate__animated animate__pulse">
+    <i class="fas fa-exclamation-triangle me-2"></i> EMERGENCY ALERT ACTIVE (#<span id="active-sos-id">--</span>)! Responders and community helpers are being notified.
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <div class="container py-4">
+
+    <!-- 1. LANDING PAGE VIEW -->
+    <section id="view-landing" class="view-section text-center py-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill fw-bold mb-3">
+            <i class="fas fa-shield-alt me-1"></i> Intelligent Women Safety Platform
+          </span>
+          <h1 class="display-4 fw-black text-dark mb-3">Empowering Personal Safety Through AI & Community</h1>
+          <p class="lead text-muted mb-4">
+            One-tap emergency SOS, real-time geofenced GPS tracking, machine-learning risk predictions, safe route navigation, and verified community emergency response.
+          </p>
+
+          <!-- Large Pulsing SOS Button -->
+          <div class="sos-pulse-container my-4">
+            <div id="btn-trigger-sos" class="btn-sos" role="button">
+              <span>SOS</span>
+              <span class="sub">PRESS TO ALERT</span>
+            </div>
+          </div>
+          <div class="mt-3">
+            <button class="btn btn-outline-dark btn-sm rounded-pill px-4" id="btn-silent-sos">
+              <i class="fas fa-eye-slash me-1"></i> Activate Silent SOS Mode
+            </button>
+          </div>
+
+          <div class="row g-4 mt-5 text-start">
+            <div class="col-md-4">
+              <div class="card p-3 card-stat h-100">
+                <i class="fas fa-bullhorn fa-2x text-danger mb-2"></i>
+                <h6 class="fw-bold">Instant SOS Dispatch</h6>
+                <p class="small text-muted mb-0">Dispatches coordinates instantly to family, neighbours, and authorities with countdown safety abort.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-3 card-stat h-100">
+                <i class="fas fa-brain fa-2x text-primary mb-2"></i>
+                <h6 class="fw-bold">AI Risk Assessment</h6>
+                <p class="small text-muted mb-0">Real-time risk scoring analyzing transit hour, route deviation, battery status, and local crime reports.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-3 card-stat h-100">
+                <i class="fas fa-users-viewfinder fa-2x text-success mb-2"></i>
+                <h6 class="fw-bold">Neighbourhood Helpers</h6>
+                <p class="small text-muted mb-0">Nearby verified community volunteers accept requests and rush to assist in urgent minutes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. USER DASHBOARD VIEW -->
+    <section id="view-dashboard" class="view-section d-none">
+      <div class="row g-4">
+        <!-- Emergency Action Hub -->
+        <div class="col-lg-4">
+          <div class="card p-4 card-stat text-center h-100">
+            <h5 class="fw-bold mb-3"><i class="fas fa-radiation text-danger me-2"></i>Emergency SOS Hub</h5>
+            <div class="sos-pulse-container my-3">
+              <div class="btn-sos mx-auto" onclick="startSosCountdown('normal')">
+                <span>SOS</span>
+                <span class="sub">5s COUNTDOWN</span>
+              </div>
+            </div>
+            <div class="d-grid gap-2 mt-3">
+              <button class="btn btn-outline-danger" onclick="startSosCountdown('silent')">
+                <i class="fas fa-user-secret me-2"></i>Trigger Silent SOS
+              </button>
+              <button class="btn btn-outline-secondary" id="btn-trigger-fake-call">
+                <i class="fas fa-phone-volume me-2"></i>Simulate Fake Incoming Call
+              </button>
+              <button class="btn btn-outline-info" onclick="switchView('view-ai')">
+                <i class="fas fa-shield-virus me-2"></i>Check Live AI Risk Score
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Safety Tools & Overview -->
+        <div class="col-lg-8">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="card p-3 card-stat border-start border-4 border-danger">
+                <span class="text-muted small fw-semibold">ACTIVE SOS STATUS</span>
+                <h4 class="fw-bold mt-1 text-danger">STANDBY / READY</h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-3 card-stat border-start border-4 border-success">
+                <span class="text-muted small fw-semibold">TRUSTED CONTACTS</span>
+                <h4 class="fw-bold mt-1 text-success" id="dash-contact-count">3 Active</h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-3 card-stat border-start border-4 border-primary">
+                <span class="text-muted small fw-semibold">NEARBY HELPERS</span>
+                <h4 class="fw-bold mt-1 text-primary">5 Verified</h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Navigation Actions -->
+          <div class="card p-4 card-stat mb-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-compass text-primary me-2"></i>Safety Navigation & Tools</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <a href="#" class="btn btn-light border w-100 text-start p-3" onclick="switchView('view-routes')">
+                  <i class="fas fa-route text-success fa-lg me-2"></i>
+                  <strong>Safe Route Finder</strong>
+                  <div class="small text-muted">Navigate through well-lit, police-patrolled streets.</div>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a href="#" class="btn btn-light border w-100 text-start p-3" onclick="switchView('view-hotspots')">
+                  <i class="fas fa-map-marked-alt text-warning fa-lg me-2"></i>
+                  <strong>Crime Hotspot Geofence</strong>
+                  <div class="small text-muted">Inspect reported danger zones and community safety notes.</div>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a href="#" class="btn btn-light border w-100 text-start p-3" onclick="switchView('view-chatbot')">
+                  <i class="fas fa-robot text-info fa-lg me-2"></i>
+                  <strong>AI Safety Chatbot</strong>
+                  <div class="small text-muted">Emergency instructions in English and Kannada.</div>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a href="#" class="btn btn-light border w-100 text-start p-3" onclick="switchView('view-network')">
+                  <i class="fas fa-users text-primary fa-lg me-2"></i>
+                  <strong>Community & Contacts</strong>
+                  <div class="small text-muted">Manage family emergency alerts & neighbourhood network.</div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Offline Emergency Helplines Card -->
+          <div class="card p-3 card-stat bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="fw-bold mb-1"><i class="fas fa-phone-alt text-danger me-2"></i>National Emergency Helplines</h6>
+                <div class="small text-muted">All India: <strong>112</strong> | Women in Distress: <strong>1091</strong> | Ambulance: <strong>108</strong></div>
+              </div>
+              <a href="tel:112" class="btn btn-danger btn-sm px-3"><i class="fas fa-phone me-1"></i> Call 112</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. LIVE GPS MAP VIEW -->
+    <section id="view-map" class="view-section d-none">
+      <div class="card p-4 card-stat">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-1"><i class="fas fa-location-crosshairs text-danger me-2"></i>Real-Time GPS Tracking</h4>
+            <p class="small text-muted mb-0">Continuous real-time tracking with geofenced safe zones (Home / College / Workplace).</p>
+          </div>
+          <button class="btn btn-outline-danger btn-sm" onclick="startSosCountdown('normal')"><i class="fas fa-bell me-1"></i> Trigger SOS</button>
+        </div>
+        <div id="live-map"></div>
+        <div class="mt-3 d-flex gap-2">
+          <button class="btn btn-outline-primary btn-sm" onclick="alert('Safe zone (Home, 400m) is active!')">Active Geofence: Home</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="alert('GPS coordinates updated: 12.9716, 77.5946')">Refresh Location</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. SAFE ROUTE RECOMMENDATION VIEW -->
+    <section id="view-routes" class="view-section d-none">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="card p-4 card-stat">
+            <h5 class="fw-bold mb-3"><i class="fas fa-shield-alt text-success me-2"></i>Smart Safe Route Finder</h5>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Origin Point</label>
+              <input type="text" id="route-origin" class="form-control" value="Indiranagar 100ft Road" placeholder="Starting Location">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Destination</label>
+              <input type="text" id="route-dest" class="form-control" value="MG Road Metro Station" placeholder="Ending Location">
+            </div>
+            <button class="btn btn-success w-100 fw-bold" id="btn-search-safe-route">
+              <i class="fas fa-magnifying-glass me-2"></i>Find Safest Route
+            </button>
+            <div class="mt-4" id="route-cards-container">
+              <p class="text-muted small">Click 'Find Safest Route' to inspect alternative paths, ETA, lighting levels, and police proximity.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="card p-4 card-stat h-100">
+            <h5 class="fw-bold mb-3">Interactive Route & Emergency Services Map</h5>
+            <div id="route-map"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. CRIME HOTSPOT & GEOFENCING VIEW -->
+    <section id="view-hotspots" class="view-section d-none">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card p-4 card-stat">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Interactive Crime Hotspot Map</h5>
+              <div>
+                <span class="badge bg-danger me-1">Red: High Risk</span>
+                <span class="badge bg-warning text-dark me-1">Orange: Warning</span>
+                <span class="badge bg-success">Green: Safe Zone</span>
+              </div>
+            </div>
+            <div id="hotspot-map"></div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card p-4 card-stat">
+            <h5 class="fw-bold mb-3">Report Safety Hazard / Incident</h5>
+            <form id="form-report-incident">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Hazard Type</label>
+                <select class="form-select" id="report-type">
+                  <option value="Poor Lighting & Isolated Stretch">Poor Lighting & Darkness</option>
+                  <option value="Suspicious Loitering">Suspicious Loitering / Harassment</option>
+                  <option value="Isolated Blind Corner">Isolated Blind Corner</option>
+                  <option value="CCTV Blindspot">Lack of Surveillance / CCTV</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Severity</label>
+                <select class="form-select" id="report-severity">
+                  <option value="HIGH RISK">High Risk</option>
+                  <option value="WARNING" selected>Warning</option>
+                  <option value="SAFE">Safe Spot</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea class="form-control" id="report-desc" rows="3" placeholder="Provide helpful details for women in the area..."></textarea>
+              </div>
+              <button type="button" class="btn btn-warning w-100 fw-bold" onclick="alert('Incident reported and pinned to hotspot map!')">
+                <i class="fas fa-plus-circle me-1"></i> Submit Report
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. AI RISK PREDICTION VIEW -->
+    <section id="view-ai" class="view-section d-none">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card p-4 card-stat mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h4 class="fw-bold mb-1"><i class="fas fa-brain text-primary me-2"></i>Machine Learning Risk Assessment</h4>
+                <p class="small text-muted mb-0">Trained Random Forest model analyzing spatio-temporal transit parameters.</p>
+              </div>
+              <span class="badge bg-info-subtle text-info border">Scikit-Learn v1.0</span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Travel Hour (0 to 23)</label>
+                <input type="number" id="ai-input-hour" class="form-control" value="23" min="0" max="23">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Current Movement Speed (km/h)</label>
+                <input type="number" id="ai-input-speed" class="form-control" value="4.5" step="0.5">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Route Deviation (meters)</label>
+                <input type="number" id="ai-input-deviation" class="form-control" value="320">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Device Battery Level (%)</label>
+                <input type="number" id="ai-input-battery" class="form-control" value="14" min="1" max="100">
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="ai-input-isolated" checked>
+                  <label class="form-check-label small fw-semibold" for="ai-input-isolated">Entering Poorly Lit or Isolated Area</label>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary w-100 fw-bold mt-4" id="btn-run-ai-predict">
+              <i class="fas fa-microchip me-2"></i>Evaluate Risk Level
+            </button>
+
+            <!-- Result Card -->
+            <div id="ai-predict-result" class="card p-4 mt-4 bg-light border-0 d-none">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="text-muted small fw-semibold">PREDICTED RISK LEVEL</span>
+                  <div class="mt-1"><span class="badge" id="ai-risk-level">--</span></div>
+                </div>
+                <div class="text-end">
+                  <span class="text-muted small fw-semibold">RISK SCORE</span>
+                  <h3 class="fw-bold mb-0 text-dark" id="ai-risk-score">--/100</h3>
+                </div>
+              </div>
+              <hr>
+              <h6 class="fw-bold small text-dark"><i class="fas fa-magnifying-glass me-1"></i> Risk Factors Detected:</h6>
+              <ul id="ai-reasons-list" class="small text-muted ps-3 mb-3"></ul>
+
+              <h6 class="fw-bold small text-success"><i class="fas fa-check-circle me-1"></i> Recommended Safety Actions:</h6>
+              <ul id="ai-recommendations-list" class="small text-muted ps-3 mb-0"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. TRUSTED NETWORK & HELPERS VIEW -->
+    <section id="view-network" class="view-section d-none">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="card p-4 card-stat h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="fas fa-heart text-danger me-2"></i>Emergency Contacts</h5>
+              <button class="btn btn-outline-danger btn-sm" onclick="alert('Add contact modal triggered')"><i class="fas fa-user-plus me-1"></i> Add Contact</button>
+            </div>
+            <ul class="list-group list-group-flush" id="contacts-list">
+              <li class="list-group-item text-muted">Loading trusted contacts...</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card p-4 card-stat h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="fas fa-handshake text-primary me-2"></i>Neighbourhood Community Helpers</h5>
+              <button class="btn btn-outline-primary btn-sm" onclick="switchView('view-register-helper')"><i class="fas fa-id-card me-1"></i> Volunteer As Helper</button>
+            </div>
+            <ul class="list-group list-group-flush" id="helpers-list">
+              <li class="list-group-item text-muted">Loading nearby verified helpers...</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. AI SAFETY CHATBOT VIEW (ENGLISH & KANNADA) -->
+    <section id="view-chatbot" class="view-section d-none">
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="card card-stat p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-robot text-danger fa-2x me-2"></i>
+                <div>
+                  <h5 class="fw-bold mb-0">AI Safety Assistant</h5>
+                  <span class="small text-muted">Bilingual Safety Guidance (English & Kannada / ಕನ್ನಡ)</span>
+                </div>
+              </div>
+              <select id="chatbot-language-select" class="form-select form-select-sm w-auto">
+                <option value="en" selected>English</option>
+                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              </select>
+            </div>
+
+            <div class="chat-box mb-3" id="chatbot-messages">
+              <div class="chat-bubble-bot">
+                Hello! I am your AI Women Safety Assistant. How can I protect and guide you right now? You can ask about emergency actions, what to do if followed, or safe travel routes.
+              </div>
+            </div>
+
+            <form id="form-chatbot" class="d-flex gap-2">
+              <input type="text" id="chat-input-text" class="form-control" placeholder="Ask for safety advice or instructions..." required>
+              <button type="button" class="btn btn-outline-secondary" id="btn-voice-input" title="Voice Input">
+                <i class="fas fa-microphone"></i>
+              </button>
+              <button type="submit" class="btn btn-danger">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. EMERGENCY INCIDENT HISTORY VIEW -->
+    <section id="view-history" class="view-section d-none">
+      <div class="card p-4 card-stat">
+        <h4 class="fw-bold mb-3"><i class="fas fa-history text-danger me-2"></i>Emergency SOS Incident History</h4>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Alert ID</th>
+                <th>Timestamp</th>
+                <th>Mode</th>
+                <th>Status</th>
+                <th>Location</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <tr><td colspan="6" class="text-center text-muted">Loading incident records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. ADMIN DASHBOARD VIEW -->
+    <section id="view-admin" class="view-section d-none">
+      <div class="card p-4 card-stat mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="fas fa-user-shield text-danger me-2"></i>System Administration & Analytics</h4>
+          <span class="badge bg-danger">ADMINISTRATOR PRIVILEGES</span>
+        </div>
+        <div class="row g-3 text-center mb-4">
+          <div class="col-md-3">
+            <div class="card p-3 bg-light border-0">
+              <span class="text-muted small">Total Registered Users</span>
+              <h3 class="fw-bold text-dark mt-1" id="metric-total-users">--</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 bg-light border-0">
+              <span class="text-muted small">Community Helpers</span>
+              <h3 class="fw-bold text-primary mt-1" id="metric-total-helpers">--</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 bg-light border-0">
+              <span class="text-muted small">Active SOS Emergencies</span>
+              <h3 class="fw-bold text-danger mt-1" id="metric-active-sos">--</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 bg-light border-0">
+              <span class="text-muted small">Reported Incidents</span>
+              <h3 class="fw-bold text-warning mt-1" id="metric-total-incidents">--</h3>
+            </div>
+          </div>
+        </div>
+
+        <h5 class="fw-bold mb-3">User & Helper Directory</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>User ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-table">
+              <tr><td colspan="6" class="text-center text-muted">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. LOGIN VIEW -->
+    <section id="view-login" class="view-section d-none py-5">
+      <div class="row justify-content-center">
+        <div class="col-md-5">
+          <div class="card p-4 card-stat">
+            <h4 class="fw-bold text-center mb-3">Account Login</h4>
+            <form id="form-login">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Email address</label>
+                <input type="email" id="login-email" class="form-control" value="victim@test.com" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Password</label>
+                <input type="password" id="login-password" class="form-control" value="password123" required>
+              </div>
+              <button type="submit" class="btn btn-danger w-100 fw-bold py-2">Sign In</button>
+            </form>
+            <div class="text-center mt-3">
+              <a href="#" class="small text-muted" onclick="switchView('view-register')">Don't have an account? Register</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. REGISTRATION VIEW -->
+    <section id="view-register" class="view-section d-none py-4">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card p-4 card-stat">
+            <h4 class="fw-bold text-center mb-3">Create Safety Account</h4>
+            <form id="form-register">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Full Name</label>
+                <input type="text" id="reg-name" class="form-control" placeholder="Pooja Sharma" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Email Address</label>
+                <input type="email" id="reg-email" class="form-control" placeholder="pooja@example.com" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Phone Number</label>
+                <input type="tel" id="reg-phone" class="form-control" placeholder="+919876543211" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Password</label>
+                <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Role</label>
+                <select id="reg-role" class="form-select">
+                  <option value="user" selected>General User / Student / Professional</option>
+                  <option value="helper">Community Emergency Volunteer / Helper</option>
+                  <option value="admin">System Administrator</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-danger w-100 fw-bold py-2">Create Account</button>
+            </form>
+            <div class="text-center mt-3">
+              <a href="#" class="small text-muted" onclick="switchView('view-login')">Already have an account? Login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 5-SECOND COUNTDOWN OVERLAY MODAL -->
+  <div id="countdown-modal" class="countdown-overlay">
+    <div class="text-white text-center">
+      <h3 class="text-uppercase fw-bold text-white mb-2" id="countdown-mode-title">EMERGENCY SOS COUNTDOWN</h3>
+      <p class="text-light mb-4">Alert will dispatch to emergency contacts and community helpers automatically.</p>
+      <div id="countdown-number" class="countdown-number mb-4">5</div>
+      <div>
+        <button id="btn-cancel-countdown" class="btn btn-light btn-lg rounded-pill px-5 fw-bold shadow">
+          <i class="fas fa-times text-danger me-2"></i> CANCEL (Accidental Touch)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAKE INCOMING CALL MODAL -->
+  <div id="fake-call-modal" class="countdown-overlay" style="background: rgba(0,0,0,0.92);">
+    <div class="phone-call-container">
+      <div class="small text-muted mb-2">INCOMING CALL</div>
+      <div class="avatar my-3">
+        <i class="fas fa-user-circle fa-5x text-secondary"></i>
+      </div>
+      <h3 class="fw-bold mb-1">Dad (Home)</h3>
+      <div class="text-muted small mb-5">Mobile +91 98450 12345</div>
+      <div class="d-flex justify-content-around mt-5">
+        <button class="btn btn-danger rounded-circle p-4" onclick="dismissFakeCall()">
+          <i class="fas fa-phone-slash fa-2x"></i>
+        </button>
+        <button class="btn btn-success rounded-circle p-4" onclick="dismissFakeCall()">
+          <i class="fas fa-phone fa-2x"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

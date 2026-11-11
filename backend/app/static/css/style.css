@@ -1,0 +1,197 @@
+:root {
+  --primary-color: #e91e63;
+  --primary-dark: #c2185b;
+  --secondary-color: #9c27b0;
+  --danger-color: #dc3545;
+  --warning-color: #ff9800;
+  --success-color: #28a745;
+  --dark-bg: #121824;
+  --card-bg: #ffffff;
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --border-radius: 14px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f8fafc;
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+/* Navbar */
+.navbar-brand {
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--primary-color) !important;
+}
+
+/* SOS Pulsing Button */
+.sos-pulse-container {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-sos {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff1744 0%, #b71c1c 100%);
+  border: 4px solid #ffffff;
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  box-shadow: 0 10px 30px rgba(233, 30, 99, 0.4);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: pulse-shadow 2s infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-sos:hover {
+  transform: scale(1.06);
+  background: linear-gradient(135deg, #d50000 0%, #880e4f 100%);
+  color: #fff;
+}
+
+.btn-sos:active {
+  transform: scale(0.96);
+}
+
+.btn-sos span.sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+@keyframes pulse-shadow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 25px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+/* Cards & Dashboards */
+.card-stat {
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+}
+
+.card-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+}
+
+.badge-risk-safe {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.badge-risk-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.badge-risk-high {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Map Containers */
+#live-map, #route-map, #hotspot-map {
+  height: 480px;
+  width: 100%;
+  border-radius: var(--border-radius);
+  border: 1px solid #e2e8f0;
+  z-index: 1;
+}
+
+/* Countdown Modal Overlay */
+.countdown-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.countdown-number {
+  font-size: 7rem;
+  font-weight: 900;
+  color: #ff1744;
+  animation: countdown-pop 1s ease infinite;
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(1.2); opacity: 0.8; }
+  50% { transform: scale(1.0); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* Chatbot Widget */
+.chat-box {
+  height: 380px;
+  overflow-y: auto;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: var(--border-radius);
+  border: 1px solid #e2e8f0;
+}
+
+.chat-bubble-bot {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px 16px 16px 4px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  max-width: 85%;
+  font-size: 0.92rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.chat-bubble-user {
+  background: #e91e63;
+  color: #ffffff;
+  border-radius: 16px 16px 4px 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  max-width: 85%;
+  margin-left: auto;
+  font-size: 0.92rem;
+  box-shadow: 0 2px 6px rgba(233, 30, 99, 0.25);
+}
+
+/* Fake Incoming Call Modal */
+.phone-call-container {
+  background: #000;
+  color: #fff;
+  border-radius: 30px;
+  padding: 40px 20px;
+  text-align: center;
+  max-width: 340px;
+  margin: 0 auto;
+}
